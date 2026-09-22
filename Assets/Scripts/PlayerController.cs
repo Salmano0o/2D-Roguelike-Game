@@ -23,7 +23,6 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        // Don't process input if the board hasn't been assigned via Spawn()
         if (m_Board == null) return;
 
         Vector2Int newCellTarget = m_CellPosition;
@@ -56,10 +55,14 @@ public class PlayerController : MonoBehaviour
             if (cellData != null && cellData.Passable)
             {
                 GameManager.Instance.TurnManager.Tick();
-                MoveTo(newCellTarget);
 
-                if (cellData.ContainedObject != null)
+                if (cellData.ContainedObject == null)
                 {
+                    MoveTo(newCellTarget);
+                }
+                else if (cellData.ContainedObject.PlayerWantsToEnter())
+                {
+                    MoveTo(newCellTarget);
                     cellData.ContainedObject.PlayerEntered();
                 }
             }

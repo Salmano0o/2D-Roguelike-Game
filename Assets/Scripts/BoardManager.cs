@@ -20,6 +20,9 @@ public class BoardManager : MonoBehaviour
     public Tile[] GroundTiles;
     public Tile[] WallTiles;
 
+    [Header("Wall Configuration")]
+    public WallObject[] WallPrefabs; // Challenge 1: Changed to array
+
     [Header("Food Configuration")]
     public FoodObject[] FoodPrefabs;
     public int MinFood = 2;
@@ -59,17 +62,47 @@ public class BoardManager : MonoBehaviour
 
         m_EmptyCellsList.Remove(new Vector2Int(1, 1));
 
+        GenerateWall();
         GenerateFood();
+    }
+
+    void AddObject(CellObject obj, Vector2Int coord)
+    {
+        CellData data = m_BoardData[coord.x, coord.y];
+        obj.transform.position = CellToWorld(coord);
+        data.ContainedObject = obj;
+        obj.Init(coord);
+    }
+
+    void GenerateWall()
+    {
+        if (WallPrefabs == null || WallPrefabs.Length == 0) return;
+
+        int wallCount = Random.Range(6, 10);
+
+        for (int i = 0; i < wallCount; ++i)
+        {
+            if (m_EmptyCellsList.Count == 0) break;
+
+            int randomIndex = Random.Range(0, m_EmptyCellsList.Count);
+            Vector2Int coord = m_EmptyCellsList[randomIndex];
+
+            m_EmptyCellsList.RemoveAt(randomIndex);
+
+            // Challenge 1: Pick a random wall prefab from the array
+            WallObject prefabToInstantiate = WallPrefabs[Random.Range(0, WallPrefabs.Length)];
+
+            if (prefabToInstantiate != null)
+            {
+                WallObject newWall = Instantiate(prefabToInstantiate);
+                AddObject(newWall, coord);
+            }
+        }
     }
 
     void GenerateFood()
     {
-        // Check if FoodPrefabs is unassigned or empty
-        if (FoodPrefabs == null || FoodPrefabs.Length == 0)
-        {
-            Debug.LogError("No Food Prefabs assigned to BoardManager in the Inspector!");
-            return;
-        }
+        if (FoodPrefabs == null || FoodPrefabs.Length == 0) return;
 
         int foodCount = Random.Range(MinFood, MaxFood + 1);
 
@@ -82,17 +115,24 @@ public class BoardManager : MonoBehaviour
 
             m_EmptyCellsList.RemoveAt(randomIndex);
 
-            CellData data = m_BoardData[coord.x, coord.y];
-
             FoodObject prefabToInstantiate = FoodPrefabs[Random.Range(0, FoodPrefabs.Length)];
 
             if (prefabToInstantiate != null)
             {
                 FoodObject newFood = Instantiate(prefabToInstantiate);
-                newFood.transform.position = CellToWorld(coord);
-                data.ContainedObject = newFood;
+                AddObject(newFood, coord);
             }
         }
+    }
+
+    public void SetCellTile(Vector2Int cellIndex, Tile tile)
+    {
+        m_Tilemap.SetTile(new Vector3Int(cellIndex.x, cellIndex.y, 0), tile);
+    }
+
+    public Tile GetCellTile(Vector2Int cellIndex)
+    {
+        return m_Tilemap.GetTile<Tile>(new Vector3Int(cellIndex.x, cellIndex.y, 0));
     }
 
     public Vector3 CellToWorld(Vector2Int cellIndex)

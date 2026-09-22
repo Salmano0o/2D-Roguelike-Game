@@ -2,9 +2,19 @@ using UnityEngine;
 
 public class CellObject : MonoBehaviour
 {
-    // Called when the player enters the cell in which this object is placed
+    protected Vector2Int m_Cell;
+
+    public virtual void Init(Vector2Int cell)
+    {
+        m_Cell = cell;
+    }
+
     public virtual void PlayerEntered()
     {
+    }
 
+    public virtual bool PlayerWantsToEnter()
+    {
+        return true;
     }
 }
