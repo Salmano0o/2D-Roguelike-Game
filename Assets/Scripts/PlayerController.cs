@@ -15,11 +15,17 @@ public class PlayerController : MonoBehaviour
     public void MoveTo(Vector2Int cell)
     {
         m_CellPosition = cell;
-        transform.position = m_Board.CellToWorld(m_CellPosition);
+        if (m_Board != null)
+        {
+            transform.position = m_Board.CellToWorld(m_CellPosition);
+        }
     }
 
     private void Update()
     {
+        // Don't process input if the board hasn't been assigned via Spawn()
+        if (m_Board == null) return;
+
         Vector2Int newCellTarget = m_CellPosition;
         bool hasMoved = false;
 
@@ -46,12 +52,16 @@ public class PlayerController : MonoBehaviour
 
         if (hasMoved)
         {
-            // Check if the new position is passable, then move there if it is.
             BoardManager.CellData cellData = m_Board.GetCellData(newCellTarget);
             if (cellData != null && cellData.Passable)
             {
                 GameManager.Instance.TurnManager.Tick();
                 MoveTo(newCellTarget);
+
+                if (cellData.ContainedObject != null)
+                {
+                    cellData.ContainedObject.PlayerEntered();
+                }
             }
         }
     }

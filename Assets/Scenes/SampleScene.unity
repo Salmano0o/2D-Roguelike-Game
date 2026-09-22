@@ -119,6 +119,61 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &240530286
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 240530288}
+  - component: {fileID: 240530287}
+  m_Layer: 5
+  m_Name: UIDocument
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &240530287
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 240530286}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: 8d56988f68ad4f94fa08ddc56e99f230, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: 73aefc550ed07d247982407443175f6a, type: 3}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!4 &240530288
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 240530286}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &444727149
 GameObject:
   m_ObjectHideFlags: 0
@@ -150,6 +205,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   BoardManager: {fileID: 1541759402}
   PlayerController: {fileID: 929278852}
+  UIDoc: {fileID: 240530287}
 --- !u!4 &444727151
 Transform:
   m_ObjectHideFlags: 0
@@ -552,6 +608,11 @@ MonoBehaviour:
   WallTiles:
   - {fileID: 11400000, guid: 8c570921dc6e456478c3c66dc0369a29, type: 2}
   - {fileID: 11400000, guid: 27d19fc8f54ac784490abf3e376f57a6, type: 2}
+  FoodPrefabs:
+  - {fileID: -3029193744527174266, guid: ec17c1279d4392a4b89c16d4ff7c4e6d, type: 3}
+  - {fileID: 4262470171486128238, guid: 06b1d1659858dea47a85138e2db1f404, type: 3}
+  MinFood: 2
+  MaxFood: 6
 --- !u!156049354 &1541759403
 Grid:
   m_ObjectHideFlags: 0
@@ -716,3 +777,4 @@ SceneRoots:
   - {fileID: 1541759404}
   - {fileID: 929278854}
   - {fileID: 444727151}
+  - {fileID: 240530288}
