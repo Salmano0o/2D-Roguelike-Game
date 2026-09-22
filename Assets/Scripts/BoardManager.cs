@@ -20,8 +20,11 @@ public class BoardManager : MonoBehaviour
     public Tile[] GroundTiles;
     public Tile[] WallTiles;
 
+    [Header("Exit Configuration")]
+    public ExitCellObject ExitCellPrefab;
+
     [Header("Wall Configuration")]
-    public WallObject[] WallPrefabs; // Challenge 1: Changed to array
+    public WallObject[] WallPrefabs;
 
     [Header("Food Configuration")]
     public FoodObject[] FoodPrefabs;
@@ -62,8 +65,33 @@ public class BoardManager : MonoBehaviour
 
         m_EmptyCellsList.Remove(new Vector2Int(1, 1));
 
+        // Place Exit Cell in upper-right corner
+        Vector2Int endCoord = new Vector2Int(Width - 2, Height - 2);
+        AddObject(Instantiate(ExitCellPrefab), endCoord);
+        m_EmptyCellsList.Remove(endCoord);
+
         GenerateWall();
         GenerateFood();
+    }
+
+    public void Clean()
+    {
+        if (m_BoardData == null)
+            return;
+
+        for (int y = 0; y < Height; ++y)
+        {
+            for (int x = 0; x < Width; ++x)
+            {
+                var cellData = m_BoardData[x, y];
+                if (cellData.ContainedObject != null)
+                {
+                    // Destroy whole GameObject, not just component
+                    Destroy(cellData.ContainedObject.gameObject);
+                }
+                SetCellTile(new Vector2Int(x, y), null);
+            }
+        }
     }
 
     void AddObject(CellObject obj, Vector2Int coord)
@@ -89,7 +117,6 @@ public class BoardManager : MonoBehaviour
 
             m_EmptyCellsList.RemoveAt(randomIndex);
 
-            // Challenge 1: Pick a random wall prefab from the array
             WallObject prefabToInstantiate = WallPrefabs[Random.Range(0, WallPrefabs.Length)];
 
             if (prefabToInstantiate != null)
