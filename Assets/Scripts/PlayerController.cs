@@ -5,7 +5,6 @@ public class PlayerController : MonoBehaviour
 {
     public float MoveSpeed = 5.0f;
 
-    // Public getter so enemies can track player location
     public Vector2Int Cell => m_CellPosition;
 
     private BoardManager m_Board;
@@ -14,11 +13,12 @@ public class PlayerController : MonoBehaviour
     private bool m_IsMoving;
     private Vector3 m_MoveTarget;
     private Animator m_Animator;
+    private PlayerStats m_Stats;
 
     private void Awake()
     {
-        // Cache the Animator component on the player
         m_Animator = GetComponent<Animator>();
+        m_Stats = GetComponent<PlayerStats>();
     }
 
     public void Init()
@@ -26,6 +26,11 @@ public class PlayerController : MonoBehaviour
         m_IsGameOver = false;
         m_IsMoving = false;
         m_Animator.SetBool("Moving", false);
+
+        if (m_Stats != null)
+        {
+            m_Stats.CurrentEnergy = m_Stats.Speed;
+        }
     }
 
     public void GameOver()
@@ -54,11 +59,9 @@ public class PlayerController : MonoBehaviour
             m_MoveTarget = m_Board.CellToWorld(m_CellPosition);
         }
 
-        // Toggle the Walk animation state
         m_Animator.SetBool("Moving", m_IsMoving);
     }
 
-    // Public method to fire the Attack animation trigger
     public void Attack()
     {
         m_Animator.SetTrigger("Attack");
@@ -95,6 +98,13 @@ public class PlayerController : MonoBehaviour
 
         if (m_Board == null) return;
 
+        // Skip / Wait turn action
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            ExecuteAction(0, Vector2Int.zero, false);
+            return;
+        }
+
         Vector2Int newCellTarget = m_CellPosition;
         bool hasMoved = false;
 
@@ -121,19 +131,49 @@ public class PlayerController : MonoBehaviour
 
         if (hasMoved)
         {
-            BoardManager.CellData cellData = m_Board.GetCellData(newCellTarget);
+            int cost = (m_Stats != null) ? m_Stats.MoveEnergyCost : 10;
+            ExecuteAction(cost, newCellTarget, true);
+        }
+    }
+
+    private void ExecuteAction(int energyCost, Vector2Int targetCell, bool isMovement)
+    {
+        if (m_Stats != null && !m_Stats.CanAfford(energyCost))
+        {
+            Debug.Log("Not enough energy for this action!");
+            return;
+        }
+
+        if (isMovement)
+        {
+            BoardManager.CellData cellData = m_Board.GetCellData(targetCell);
             if (cellData != null && cellData.Passable)
             {
-                GameManager.Instance.TurnManager.Tick();
+                if (m_Stats != null) m_Stats.SpendEnergy(energyCost);
 
                 if (cellData.ContainedObject == null)
                 {
-                    MoveTo(newCellTarget, false);
+                    MoveTo(targetCell, false);
                 }
                 else if (cellData.ContainedObject.PlayerWantsToEnter())
                 {
-                    MoveTo(newCellTarget, false);
+                    MoveTo(targetCell, false);
                 }
+            }
+        }
+        else
+        {
+            int cost = (m_Stats != null) ? m_Stats.MoveEnergyCost : 10;
+            if (m_Stats != null) m_Stats.SpendEnergy(cost);
+        }
+
+        // Advance world turn tick when out of energy
+        if (m_Stats == null || m_Stats.CurrentEnergy < m_Stats.MoveEnergyCost)
+        {
+            GameManager.Instance.TurnManager.Tick();
+            if (m_Stats != null)
+            {
+                m_Stats.AddTurnEnergy();
             }
         }
     }

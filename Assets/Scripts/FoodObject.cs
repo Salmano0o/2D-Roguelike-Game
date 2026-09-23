@@ -6,10 +6,18 @@ public class FoodObject : CellObject
 
     public override void PlayerEntered()
     {
+        PlayerStats stats = GameManager.Instance.PlayerController.GetComponent<PlayerStats>();
+        int finalAmount = AmountGranted;
+
+        if (stats != null)
+        {
+            finalAmount = Mathf.RoundToInt(AmountGranted * stats.FoodMultiplier);
+        }
+
         Destroy(gameObject);
 
         // Increase food amount in GameManager
-        GameManager.Instance.ChangeFood(AmountGranted);
-        Debug.Log("Food increased");
+        GameManager.Instance.ChangeFood(finalAmount);
+        Debug.Log("Food increased by: " + finalAmount);
     }
 }

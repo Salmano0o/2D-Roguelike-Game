@@ -15,8 +15,8 @@ public class BoardManager : MonoBehaviour
     private Grid m_Grid;
     private List<Vector2Int> m_EmptyCellsList;
 
-    public int Width;
-    public int Height;
+    public int Width = 8;
+    public int Height = 8;
     public Tile[] GroundTiles;
     public Tile[] WallTiles;
 
@@ -36,7 +36,18 @@ public class BoardManager : MonoBehaviour
     public int MinEnemy = 1;
     public int MaxEnemy = 2;
 
-    public void Init()
+    [Header("Item Configuration")]
+    public CellObject[] ItemPrefabs;
+
+    // Dynamically calculates board size based on current level
+    public void SetBoardSize(int level)
+    {
+        int sizeBonus = Mathf.Min((level - 1) / 2, 12);
+        Width = 8 + sizeBonus;
+        Height = 8 + sizeBonus;
+    }
+
+    public void Init(int level)
     {
         m_Tilemap = GetComponentInChildren<Tilemap>();
         m_Grid = GetComponentInChildren<Grid>();
@@ -64,20 +75,27 @@ public class BoardManager : MonoBehaviour
                     m_EmptyCellsList.Add(new Vector2Int(x, y));
                 }
 
-                m_Tilemap.SetTile(new Vector3Int(x, y, 0), tile);
+                if (m_Tilemap != null)
+                {
+                    m_Tilemap.SetTile(new Vector3Int(x, y, 0), tile);
+                }
             }
         }
 
         m_EmptyCellsList.Remove(new Vector2Int(1, 1));
 
-        // Place Exit Cell in upper-right corner
+        // Place Exit Cell in upper-right corner dynamically
         Vector2Int endCoord = new Vector2Int(Width - 2, Height - 2);
-        AddObject(Instantiate(ExitCellPrefab), endCoord);
-        m_EmptyCellsList.Remove(endCoord);
+        if (ExitCellPrefab != null)
+        {
+            AddObject(Instantiate(ExitCellPrefab), endCoord);
+            m_EmptyCellsList.Remove(endCoord);
+        }
 
-        GenerateWall();
-        GenerateFood();
-        GenerateEnemy();
+        GenerateWall(level);
+        GenerateFood(level);
+        GenerateEnemy(level);
+        GenerateItems();
     }
 
     public void Clean()
@@ -85,14 +103,16 @@ public class BoardManager : MonoBehaviour
         if (m_BoardData == null)
             return;
 
-        for (int y = 0; y < Height; ++y)
+        int arrayWidth = m_BoardData.GetLength(0);
+        int arrayHeight = m_BoardData.GetLength(1);
+
+        for (int y = 0; y < arrayHeight; ++y)
         {
-            for (int x = 0; x < Width; ++x)
+            for (int x = 0; x < arrayWidth; ++x)
             {
                 var cellData = m_BoardData[x, y];
-                if (cellData.ContainedObject != null)
+                if (cellData != null && cellData.ContainedObject != null)
                 {
-                    // Destroy whole GameObject, not just component
                     Destroy(cellData.ContainedObject.gameObject);
                 }
                 SetCellTile(new Vector2Int(x, y), null);
@@ -108,11 +128,13 @@ public class BoardManager : MonoBehaviour
         obj.Init(coord);
     }
 
-    void GenerateWall()
+    void GenerateWall(int level)
     {
         if (WallPrefabs == null || WallPrefabs.Length == 0) return;
 
-        int wallCount = Random.Range(6, 10);
+        int minWalls = Width + (level / 2);
+        int maxWalls = Width + 4 + level;
+        int wallCount = Random.Range(minWalls, maxWalls);
 
         for (int i = 0; i < wallCount; ++i)
         {
@@ -133,11 +155,15 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    void GenerateFood()
+    void GenerateFood(int level)
     {
         if (FoodPrefabs == null || FoodPrefabs.Length == 0) return;
 
-        int foodCount = Random.Range(MinFood, MaxFood + 1);
+        int foodPenalty = (level - 1) / 3;
+        int minFood = Mathf.Max(1, MinFood - foodPenalty);
+        int maxFood = Mathf.Max(2, MaxFood - foodPenalty);
+
+        int foodCount = Random.Range(minFood, maxFood + 1);
 
         for (int i = 0; i < foodCount; ++i)
         {
@@ -158,7 +184,7 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    void GenerateEnemy()
+    void GenerateEnemy(int level)
     {
         if (EnemyPrefabs == null || EnemyPrefabs.Length == 0) return;
 
@@ -183,18 +209,44 @@ public class BoardManager : MonoBehaviour
         }
     }
 
+    void GenerateItems()
+    {
+        if (ItemPrefabs == null || ItemPrefabs.Length == 0) return;
+
+        if (m_EmptyCellsList.Count > 0)
+        {
+            int randomIndex = Random.Range(0, m_EmptyCellsList.Count);
+            Vector2Int coord = m_EmptyCellsList[randomIndex];
+
+            m_EmptyCellsList.RemoveAt(randomIndex);
+
+            CellObject itemPrefab = ItemPrefabs[Random.Range(0, ItemPrefabs.Length)];
+
+            if (itemPrefab != null)
+            {
+                CellObject newObj = Instantiate(itemPrefab);
+                AddObject(newObj, coord);
+            }
+        }
+    }
+
     public void SetCellTile(Vector2Int cellIndex, Tile tile)
     {
-        m_Tilemap.SetTile(new Vector3Int(cellIndex.x, cellIndex.y, 0), tile);
+        if (m_Tilemap != null)
+        {
+            m_Tilemap.SetTile(new Vector3Int(cellIndex.x, cellIndex.y, 0), tile);
+        }
     }
 
     public Tile GetCellTile(Vector2Int cellIndex)
     {
+        if (m_Tilemap == null) return null;
         return m_Tilemap.GetTile<Tile>(new Vector3Int(cellIndex.x, cellIndex.y, 0));
     }
 
     public Vector3 CellToWorld(Vector2Int cellIndex)
     {
+        if (m_Grid == null) return Vector3.zero;
         return m_Grid.GetCellCenterWorld((Vector3Int)cellIndex);
     }
 

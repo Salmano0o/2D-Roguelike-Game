@@ -26,6 +26,9 @@ public class GameManager : MonoBehaviour
         }
 
         Instance = this;
+
+        // Ensure time is unpaused on initialization
+        Time.timeScale = 1f;
     }
 
     void Start()
@@ -33,34 +36,89 @@ public class GameManager : MonoBehaviour
         TurnManager = new TurnManager();
         TurnManager.OnTick += OnTurnHappen;
 
-        m_FoodLabel = UIDoc.rootVisualElement.Q<Label>("FoodLabel");
-        m_GameOverPanel = UIDoc.rootVisualElement.Q<VisualElement>("GameOverPanel");
-        m_GameOverMessage = m_GameOverPanel.Q<Label>("GameOverMessage");
+        if (UIDoc != null && UIDoc.rootVisualElement != null)
+        {
+            m_FoodLabel = UIDoc.rootVisualElement.Q<Label>("FoodLabel");
+            m_GameOverPanel = UIDoc.rootVisualElement.Q<VisualElement>("GameOverPanel");
+            if (m_GameOverPanel != null)
+            {
+                m_GameOverMessage = m_GameOverPanel.Q<Label>("GameOverMessage");
+            }
+        }
 
-        StartNewGame();
+        // Automatically start the game if no UIManager exists in the scene
+        if (UIManager.Instance == null)
+        {
+            StartNewGame();
+        }
     }
 
     public void StartNewGame()
     {
-        m_GameOverPanel.style.visibility = Visibility.Hidden;
+        Time.timeScale = 1f;
+
+        if (m_GameOverPanel != null)
+        {
+            m_GameOverPanel.style.visibility = Visibility.Hidden;
+        }
 
         m_CurrentLevel = 1;
         m_FoodAmount = 20;
-        m_FoodLabel.text = "Food : " + m_FoodAmount;
 
-        BoardManager.Clean();
-        BoardManager.Init();
+        if (m_FoodLabel != null)
+        {
+            m_FoodLabel.text = "Food : " + m_FoodAmount;
+        }
 
-        PlayerController.Init();
-        PlayerController.Spawn(BoardManager, new Vector2Int(1, 1));
+        // Clean existing board BEFORE scaling dimensions
+        if (BoardManager != null)
+        {
+            BoardManager.Clean();
+
+            // Set dimensions and parameters for level 1
+            UpdateLevelDifficulty();
+
+            // Initialize board with current level
+            BoardManager.Init(m_CurrentLevel);
+        }
+
+        if (PlayerController != null)
+        {
+            PlayerController.Init();
+            PlayerController.Spawn(BoardManager, new Vector2Int(1, 1));
+        }
     }
 
     public void NewLevel()
     {
-        BoardManager.Clean();
-        BoardManager.Init();
-        PlayerController.Spawn(BoardManager, new Vector2Int(1, 1));
         m_CurrentLevel++;
+
+        // Clean previous level BEFORE setting new dimensions
+        if (BoardManager != null)
+        {
+            BoardManager.Clean();
+
+            // Update grid size and difficulty for the new level
+            UpdateLevelDifficulty();
+
+            // Re-initialize board with updated level parameters
+            BoardManager.Init(m_CurrentLevel);
+        }
+
+        if (PlayerController != null)
+        {
+            PlayerController.Spawn(BoardManager, new Vector2Int(1, 1));
+        }
+    }
+
+    private void UpdateLevelDifficulty()
+    {
+        // 1. Set dynamic grid size based on level
+        BoardManager.SetBoardSize(m_CurrentLevel);
+
+        // 2. Increase enemy count on higher levels
+        BoardManager.MinEnemy = 1 + (m_CurrentLevel / 3);
+        BoardManager.MaxEnemy = 2 + (m_CurrentLevel / 2);
     }
 
     void OnTurnHappen()
@@ -71,13 +129,27 @@ public class GameManager : MonoBehaviour
     public void ChangeFood(int amount)
     {
         m_FoodAmount += amount;
-        m_FoodLabel.text = "Food : " + m_FoodAmount;
+
+        if (m_FoodLabel != null)
+        {
+            m_FoodLabel.text = "Food : " + m_FoodAmount;
+        }
 
         if (m_FoodAmount <= 0)
         {
-            PlayerController.GameOver();
-            m_GameOverPanel.style.visibility = Visibility.Visible;
-            m_GameOverMessage.text = "Game Over!\n\nSurvived " + m_CurrentLevel + " days\n\nPress [Enter] to restart";
+            if (PlayerController != null)
+            {
+                PlayerController.GameOver();
+            }
+
+            if (m_GameOverPanel != null)
+            {
+                m_GameOverPanel.style.visibility = Visibility.Visible;
+                if (m_GameOverMessage != null)
+                {
+                    m_GameOverMessage.text = "Game Over!\n\nSurvived " + m_CurrentLevel + " days\n\nPress [Enter] to restart";
+                }
+            }
         }
     }
 }
