@@ -3,13 +3,26 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
+    public float MoveSpeed = 5.0f;
+
     private BoardManager m_Board;
     private Vector2Int m_CellPosition;
     private bool m_IsGameOver;
+    private bool m_IsMoving;
+    private Vector3 m_MoveTarget;
+    private Animator m_Animator;
+
+    private void Awake()
+    {
+        // Cache the Animator component on the player
+        m_Animator = GetComponent<Animator>();
+    }
 
     public void Init()
     {
         m_IsGameOver = false;
+        m_IsMoving = false;
+        m_Animator.SetBool("Moving", false);
     }
 
     public void GameOver()
@@ -20,16 +33,32 @@ public class PlayerController : MonoBehaviour
     public void Spawn(BoardManager boardManager, Vector2Int cell)
     {
         m_Board = boardManager;
-        MoveTo(cell);
+        MoveTo(cell, true);
     }
 
-    public void MoveTo(Vector2Int cell)
+    public void MoveTo(Vector2Int cell, bool immediate)
     {
         m_CellPosition = cell;
-        if (m_Board != null)
+
+        if (immediate)
         {
+            m_IsMoving = false;
             transform.position = m_Board.CellToWorld(m_CellPosition);
         }
+        else
+        {
+            m_IsMoving = true;
+            m_MoveTarget = m_Board.CellToWorld(m_CellPosition);
+        }
+
+        // Toggle the Walk animation state
+        m_Animator.SetBool("Moving", m_IsMoving);
+    }
+
+    // Public method to fire the Attack animation trigger
+    public void Attack()
+    {
+        m_Animator.SetTrigger("Attack");
     }
 
     private void Update()
@@ -39,6 +68,24 @@ public class PlayerController : MonoBehaviour
             if (Keyboard.current.enterKey.wasPressedThisFrame)
             {
                 GameManager.Instance.StartNewGame();
+            }
+            return;
+        }
+
+        if (m_IsMoving)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, m_MoveTarget, MoveSpeed * Time.deltaTime);
+
+            if (transform.position == m_MoveTarget)
+            {
+                m_IsMoving = false;
+                m_Animator.SetBool("Moving", false);
+
+                var cellData = m_Board.GetCellData(m_CellPosition);
+                if (cellData.ContainedObject != null)
+                {
+                    cellData.ContainedObject.PlayerEntered();
+                }
             }
             return;
         }
@@ -78,12 +125,11 @@ public class PlayerController : MonoBehaviour
 
                 if (cellData.ContainedObject == null)
                 {
-                    MoveTo(newCellTarget);
+                    MoveTo(newCellTarget, false);
                 }
                 else if (cellData.ContainedObject.PlayerWantsToEnter())
                 {
-                    MoveTo(newCellTarget);
-                    cellData.ContainedObject.PlayerEntered();
+                    MoveTo(newCellTarget, false);
                 }
             }
         }

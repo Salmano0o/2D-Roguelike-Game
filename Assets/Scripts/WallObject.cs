@@ -25,6 +25,9 @@ public class WallObject : CellObject
     {
         m_HealthPoint -= 1;
 
+        // Trigger the attack animation on the player when hitting a wall
+        GameManager.Instance.PlayerController.Attack();
+
         if (m_HealthPoint > 0)
         {
             // Challenge 2: Swap to damaged tile sprite when HP hits 1
