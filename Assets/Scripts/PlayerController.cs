@@ -5,6 +5,9 @@ public class PlayerController : MonoBehaviour
 {
     public float MoveSpeed = 5.0f;
 
+    // Public getter so enemies can track player location
+    public Vector2Int Cell => m_CellPosition;
+
     private BoardManager m_Board;
     private Vector2Int m_CellPosition;
     private bool m_IsGameOver;

@@ -641,6 +641,10 @@ MonoBehaviour:
   - {fileID: 4262470171486128238, guid: 06b1d1659858dea47a85138e2db1f404, type: 3}
   MinFood: 2
   MaxFood: 6
+  EnemyPrefabs:
+  - {fileID: 5338042862507769205, guid: 440521c99f6c58440af131e906322ba4, type: 3}
+  MinEnemy: 1
+  MaxEnemy: 2
 --- !u!156049354 &1541759403
 Grid:
   m_ObjectHideFlags: 0

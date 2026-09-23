@@ -31,6 +31,11 @@ public class BoardManager : MonoBehaviour
     public int MinFood = 2;
     public int MaxFood = 6;
 
+    [Header("Enemy Configuration")]
+    public Enemy[] EnemyPrefabs;
+    public int MinEnemy = 1;
+    public int MaxEnemy = 2;
+
     public void Init()
     {
         m_Tilemap = GetComponentInChildren<Tilemap>();
@@ -72,6 +77,7 @@ public class BoardManager : MonoBehaviour
 
         GenerateWall();
         GenerateFood();
+        GenerateEnemy();
     }
 
     public void Clean()
@@ -148,6 +154,31 @@ public class BoardManager : MonoBehaviour
             {
                 FoodObject newFood = Instantiate(prefabToInstantiate);
                 AddObject(newFood, coord);
+            }
+        }
+    }
+
+    void GenerateEnemy()
+    {
+        if (EnemyPrefabs == null || EnemyPrefabs.Length == 0) return;
+
+        int enemyCount = Random.Range(MinEnemy, MaxEnemy + 1);
+
+        for (int i = 0; i < enemyCount; ++i)
+        {
+            if (m_EmptyCellsList.Count == 0) break;
+
+            int randomIndex = Random.Range(0, m_EmptyCellsList.Count);
+            Vector2Int coord = m_EmptyCellsList[randomIndex];
+
+            m_EmptyCellsList.RemoveAt(randomIndex);
+
+            Enemy prefabToInstantiate = EnemyPrefabs[Random.Range(0, EnemyPrefabs.Length)];
+
+            if (prefabToInstantiate != null)
+            {
+                Enemy newEnemy = Instantiate(prefabToInstantiate);
+                AddObject(newEnemy, coord);
             }
         }
     }
